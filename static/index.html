@@ -154,8 +154,6 @@ function renderResult(d) {
   const checks = [
     ['Syntax Check',        d.is_valid_format,          'bool'],
     ['MX Records',          d.mx_found,                 'bool'],
-    ['SPF Record',          d.has_spf,                  'bool'],
-    ['DMARC Record',        d.has_dmarc,                'bool'],
     ['SMTP Reachable',      d.smtp_reachable,           'bool'],
     ['Mailbox Exists',      d.mailbox_exists,           'tri'],
     ['Role Address',        d.is_role_account,          'inverse'],

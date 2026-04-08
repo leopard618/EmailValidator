@@ -13,9 +13,6 @@ class ValidationResult(BaseModel):
 
     is_valid_format: bool = False
     mx_found: bool = False
-    has_a_record: bool = False
-    has_spf: bool = False
-    has_dmarc: bool = False
     smtp_reachable: bool = False
     mailbox_exists: bool | None = None
     is_role_account: bool = False
