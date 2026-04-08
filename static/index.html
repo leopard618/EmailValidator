@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Validator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f7fa;--card:#fff;--border:#e2e8f0;
+  --text:#1a202c;--muted:#64748b;
+  --green:#16a34a;--green-bg:#dcfce7;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --yellow:#ca8a04;--yellow-bg:#fef9c3;
+  --blue:#2563eb;--blue-bg:#dbeafe;
+  --gray:#94a3b8;--gray-bg:#f1f5f9;
+  --purple:#7c3aed;--purple-bg:#ede9fe;
+  --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:linear-gradient(135deg,#1e40af,#7c3aed);color:#fff;padding:2.5rem 1rem 2rem;text-align:center}
+header h1{font-size:1.75rem;font-weight:700;margin-bottom:.35rem}
+header p{opacity:.85;font-size:.95rem}
+.container{width:100%;max-width:680px;padding:0 1rem}
+.search-box{margin:-1.5rem auto 0;position:relative;z-index:2}
+.search-box form{display:flex;gap:0;background:var(--card);border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,.12);overflow:hidden}
+.search-box input{flex:1;border:none;padding:1rem 1.25rem;font-size:1rem;outline:none;background:transparent}
+.search-box button{background:#2563eb;color:#fff;border:none;padding:0 1.75rem;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
+.search-box button:hover{background:#1d4ed8}
+.search-box button:disabled{background:#93c5fd;cursor:not-allowed}
+
+.result-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:1.5rem;overflow:hidden;border:1px solid var(--border)}
+.result-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.result-header .email-display{font-size:1.1rem;font-weight:600;word-break:break-all}
+.status-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .75rem;border-radius:20px;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.status-ok{background:var(--green-bg);color:var(--green)}
+.status-invalid{background:var(--red-bg);color:var(--red)}
+.status-risky{background:var(--yellow-bg);color:var(--yellow)}
+.status-unknown{background:var(--gray-bg);color:var(--gray)}
+.status-disposable{background:var(--purple-bg);color:var(--purple)}
+
+.score-section{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem}
+.score-bar-wrap{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.score-bar{height:100%;border-radius:4px;transition:width .6s ease}
+.score-label{font-weight:700;font-size:1.1rem;min-width:52px;text-align:right}
+.score-text{font-size:.85rem;color:var(--muted)}
+
+.checks-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.check-row{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.5rem;border-bottom:1px solid var(--border)}
+.check-row:nth-child(odd){border-right:1px solid var(--border)}
+.check-label{font-size:.88rem;color:var(--muted)}
+.check-value{font-size:.88rem;font-weight:600;display:flex;align-items:center;gap:.3rem}
+.icon-pass{color:var(--green)}
+.icon-fail{color:var(--red)}
+.icon-warn{color:var(--yellow)}
+.icon-na{color:var(--gray)}
+
+.detail-section{padding:1.25rem 1.5rem;border-top:1px solid var(--border)}
+.detail-section h3{font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.75rem}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem}
+.detail-item{font-size:.85rem}
+.detail-item span:first-child{color:var(--muted)}
+.detail-item span:last-child{font-weight:500;margin-left:.35rem}
+
+.suggest-bar{padding:.75rem 1.5rem;background:#fef3c7;border-bottom:1px solid #fde68a;font-size:.88rem;color:#92400e}
+.suggest-bar a{color:#b45309;font-weight:600;cursor:pointer;text-decoration:underline}
+
+.message-bar{padding:.75rem 1.5rem;font-size:.88rem;color:var(--muted);border-bottom:1px solid var(--border)}
+
+.loading{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.loading .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto .75rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty-state{text-align:center;padding:4rem 1rem;color:var(--muted)}
+.empty-state svg{width:64px;height:64px;margin-bottom:1rem;opacity:.4}
+
+footer{margin-top:auto;padding:2rem 1rem;text-align:center;font-size:.8rem;color:var(--muted)}
+
+@media(max-width:600px){
+  .checks-grid{grid-template-columns:1fr}
+  .check-row:nth-child(odd){border-right:none}
+  .detail-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Email Validator</h1>
+  <p>Validate any email address — syntax, DNS, SMTP, and more</p>
+</header>
+
+<div class="container">
+  <div class="search-box">
+    <form id="validateForm">
+      <input type="text" id="emailInput" placeholder="Enter email address..." autocomplete="off" autofocus>
+      <button type="submit" id="submitBtn">Validate</button>
+    </form>
+  </div>
+
+  <div id="resultArea"></div>
+</div>
+
+<footer>Email Validation Service &mdash; Open Source</footer>
+
+<script>
+const form = document.getElementById('validateForm');
+const input = document.getElementById('emailInput');
+const btn = document.getElementById('submitBtn');
+const area = document.getElementById('resultArea');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = input.value.trim();
+  if (!email) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  area.innerHTML = `
+    <div class="result-card">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>Validating <strong>${esc(email)}</strong>...</div>
+        <div style="margin-top:.5rem;font-size:.8rem;color:#94a3b8">Checking syntax, DNS, SMTP — this may take a few seconds</div>
+      </div>
+    </div>`;
+
+  try {
+    const res = await fetch('/api/validate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email})
+    });
+    const data = await res.json();
+    renderResult(data);
+  } catch (err) {
+    area.innerHTML = `<div class="result-card"><div class="message-bar" style="color:var(--red)">Error: ${esc(err.message)}</div></div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Validate';
+  }
+});
+
+function renderResult(d) {
+  const statusClass = {ok:'status-ok', invalid:'status-invalid', risky:'status-risky', unknown:'status-unknown', disposable:'status-disposable'}[d.status] || 'status-unknown';
+  const scoreColor = d.score >= 0.8 ? 'var(--green)' : d.score >= 0.5 ? 'var(--yellow)' : 'var(--red)';
+  const scorePercent = Math.round(d.score * 100);
+
+  let suggest = '';
+  if (d.did_you_mean) {
+    suggest = `<div class="suggest-bar">Did you mean <a onclick="document.getElementById('emailInput').value='${esc(d.did_you_mean)}';document.getElementById('validateForm').dispatchEvent(new Event('submit'))">${esc(d.did_you_mean)}</a>?</div>`;
+  }
+
+  const checks = [
+    ['Syntax Check',        d.is_valid_format,          'bool'],
+    ['MX Records',          d.mx_found,                 'bool'],
+    ['SPF Record',          d.has_spf,                  'bool'],
+    ['DMARC Record',        d.has_dmarc,                'bool'],
+    ['SMTP Reachable',      d.smtp_reachable,           'bool'],
+    ['Mailbox Exists',      d.mailbox_exists,           'tri'],
+    ['Role Address',        d.is_role_account,          'inverse'],
+    ['Disposable Address',  d.is_disposable,            'inverse'],
+    ['Accept-All Domain',   d.is_accept_all,            'inverse_tri'],
+    ['Greylisting',         d.is_greylisted,            'inverse'],
+  ];
+
+  let checksHtml = '';
+  for (const [label, val, type] of checks) {
+    checksHtml += `<div class="check-row"><span class="check-label">${label}</span><span class="check-value">${renderCheck(val, type)}</span></div>`;
+  }
+
+  area.innerHTML = `
+    <div class="result-card">
+      <div class="result-header">
+        <span class="email-display">${esc(d.normalized_email || d.email)}</span>
+        <span class="status-badge ${statusClass}">${statusIcon(d.status)} ${esc(d.status)}</span>
+      </div>
+      ${suggest}
+      ${d.message ? `<div class="message-bar">${esc(d.message)}</div>` : ''}
+      <div class="score-section">
+        <span class="score-text">Confidence</span>
+        <div class="score-bar-wrap"><div class="score-bar" style="width:${scorePercent}%;background:${scoreColor}"></div></div>
+        <span class="score-label" style="color:${scoreColor}">${scorePercent}%</span>
+      </div>
+      <div class="checks-grid">${checksHtml}</div>
+      <div class="detail-section">
+        <h3>Details</h3>
+        <div class="detail-grid">
+          <div class="detail-item"><span>Local part:</span><span>${esc(d.local_part || '—')}</span></div>
+          <div class="detail-item"><span>Domain:</span><span>${esc(d.domain || '—')}</span></div>
+          <div class="detail-item"><span>Status:</span><span>${esc(d.status)}</span></div>
+          <div class="detail-item"><span>Sub-status:</span><span>${esc(d.sub_status || '—')}</span></div>
+          ${d.smtp_code ? `<div class="detail-item"><span>SMTP code:</span><span>${d.smtp_code}</span></div>` : ''}
+          ${d.smtp_message ? `<div class="detail-item"><span>SMTP message:</span><span>${esc(d.smtp_message)}</span></div>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCheck(val, type) {
+  if (val === null || val === undefined) return `<span class="icon-na">&#9679;</span> N/A`;
+  if (type === 'bool')        return val ? `<span class="icon-pass">&#10003;</span> Pass` : `<span class="icon-fail">&#10007;</span> Fail`;
+  if (type === 'inverse')     return val ? `<span class="icon-warn">&#9888;</span> Yes` : `<span class="icon-pass">&#10003;</span> No`;
+  if (type === 'tri')         return val === true ? `<span class="icon-pass">&#10003;</span> Yes` : val === false ? `<span class="icon-fail">&#10007;</span> No` : `<span class="icon-na">&#9679;</span> Unknown`;
+  if (type === 'inverse_tri') return val === true ? `<span class="icon-warn">&#9888;</span> Yes` : val === false ? `<span class="icon-pass">&#10003;</span> No` : `<span class="icon-na">&#9679;</span> Unknown`;
+  return String(val);
+}
+
+function statusIcon(s) {
+  return {ok:'&#10003;', invalid:'&#10007;', risky:'&#9888;', unknown:'&#63;', disposable:'&#128465;'}[s] || '?';
+}
+
+function esc(s) {
+  if (s == null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
